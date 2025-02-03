@@ -118,6 +118,28 @@ class TrainingFileDetailView(APIView):
         except TrainingFile.DoesNotExist:
             return Response({"error": "Training file not found."}, status=404)
 
+class NotarizedFileCreateView(APIView):
+    def post(self, request, trackingnumber):
+        try:
+            # Get the Safety record based on the tracking number
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            files = request.FILES.getlist('notarizedFiles')  # Get the list of uploaded files
+
+            if not files:
+                return Response({"error": "No files provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Iterate over the files and save each one
+            for file in files:
+                serializer = NotarizedFileSerializer(data={'file': file, 'safety': safety_record.id})
+                if serializer.is_valid():
+                    serializer.save()  # Save the file associated with the safety record
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": "Files uploaded successfully!"}, status=status.HTTP_201_CREATED)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=status.HTTP_404_NOT_FOUND)
+
 class NotarizedFileListView(APIView):
     def get(self, request, trackingnumber):
         try:

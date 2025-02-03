@@ -12,6 +12,7 @@ from .views import (
     WorkExperienceFileDetailView,
     TrainingFileListView,
     TrainingFileDetailView,
+    NotarizedFileCreateView,
     NotarizedFileListView,
     NotarizedFileDetailView,
     )
@@ -39,6 +40,7 @@ urlpatterns = [
     path('training-file/<int:file_id>/', TrainingFileDetailView.as_view(), name='training-file-detail'),
 
     # Notarized Files
+    path('safety/<str:trackingnumber>/notarized-file/', NotarizedFileCreateView.as_view(), name='notarized-file-create'),
     path('safety/<str:trackingnumber>/notarized-files/', NotarizedFileListView.as_view(), name='notarized-file-list'),
     path('notarized-file/<int:file_id>/', NotarizedFileDetailView.as_view(), name='notarized-file-detail'),
 ]

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-lt2)*$uk-5$0$%=p&=gg-7#v^85ui5h!+h_ov6s=y!qd6z+u3y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'safety',
+    'checklist',
 ]
 
 MIDDLEWARE = [
@@ -135,7 +136,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # OR allow specific origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Example for local development
-    "https://yourfrontend.com",  # Your production frontend
+    "https://172.31.10.156:3000",  # Your production frontend
 ]
 
 # Allow credentials (if needed)

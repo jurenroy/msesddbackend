@@ -22,6 +22,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('safety.urls')),  # Include the safety app URLs
+    path('api/', include('checklist.urls')),
 ]
 
 # Serve media files during development
