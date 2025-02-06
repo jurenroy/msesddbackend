@@ -20,10 +20,10 @@ class SafetyCreateView(APIView):
         return Response(serializer.errors, status=400)
 
 class SafetyUpdateView(APIView):
-    def post(self, request, trackingnumber):
+    def put(self, request, trackingnumber):
         try:
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            serializer = SafetySerializer(safety_record, data=request.data)
+            serializer = SafetySerializer(safety_record, data=request.data, partial=True)  # Allow partial updates
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=200)
@@ -143,6 +143,7 @@ class NotarizedFileCreateView(APIView):
 class NotarizedFileListView(APIView):
     def get(self, request, trackingnumber):
         try:
+            print(trackingnumber)
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
             notarized_files = NotarizedFile.objects.filter(safety=safety_record)
             serializer = NotarizedFileSerializer(notarized_files, many=True)
