@@ -68,3 +68,5 @@ class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ChecklistListView(generics.ListAPIView):
     queryset = Checklist.objects.all()
     serializer_class = ChecklistSerializer
+
+

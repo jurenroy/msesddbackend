@@ -21,3 +21,8 @@ class ChecklistSerializer(serializers.ModelSerializer):
                 representation[field] = file_field
 
         return representation
+
+
+
+
+    

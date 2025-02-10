@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam List</title>
+</head>
+<body>
+    <h1>Exams</h1>
+    <ul>
+        {% for exam in exams %}
+            <li>
+                <a href="{% url 'exam:exam_view' exam.pk %}">{{ exam.topic }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

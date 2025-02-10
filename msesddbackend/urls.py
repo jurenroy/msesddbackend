@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('safety.urls')),  # Include the safety app URLs
     path('api/', include('checklist.urls')),
+    path('api/exam/', include('Exam.urls', namespace='exam')),
 ]
 
 # Serve media files during development

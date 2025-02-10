@@ -89,3 +89,11 @@ class Checklist(models.Model):
 
     def __str__(self):
         return f"Checklist for {self.safety.name} - {self.safety.tracking_code}"
+
+
+
+    
+
+
+    
+
