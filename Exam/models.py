@@ -1,7 +1,7 @@
 # checklist/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
+
 
 class Exam(models.Model):
     name = models.CharField(max_length=120, blank=True, null=True)
@@ -14,30 +14,30 @@ class Exam(models.Model):
         return f"{self.name} - {self.topic}"
     
     def get_questions(self):
-        return self.question_set.all()[:self.number_of_questions]
+        return self.questions.all()[:self.number_of_questions]
     
     class Meta:
         verbose_name_plural = "Exams"
 
 class Question(models.Model):
     text = models.CharField(max_length=500)
-    quiz = models.ForeignKey(Exam, related_name='questions', on_delete=models.CASCADE)
+    exam = models.ForeignKey(Exam, related_name='questions', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return str(self.text)
     
     def get_answers(self):
-        return self.answers_set.all()
+        return self.answers.all()
 
 class Answer(models.Model):
-    text = models.CharField(max_length=500)
+    choices = models.CharField(max_length=500)
     correct = models.BooleanField(default=False)
-    question = models.ForeignKey(Question, related_name='question', on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, related_name='answers', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)  # Correctly defined
 
     def __str__(self):
-        return f"question: {self.question.text}, answer: {self.text}, correct: {self.correct}"
+        return f"question: {self.question.text}, answer: {self.choices}, correct: {self.correct}"
     
     
 class Result(models.Model):
@@ -47,3 +47,5 @@ class Result(models.Model):
 
     def __str__(self):
         return str(self.pk) 
+        
+
