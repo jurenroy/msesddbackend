@@ -1,6 +1,32 @@
 # checklist/serializers.py
 from rest_framework import serializers
-from .models import Exam, Question, Answer, Result
+from .models import Exam, Question, Answer, Result, MatchingExercise, MatchingQuestion, MatchingPair, MatchingAnswer
+
+class MatchingAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MatchingAnswer
+        fields = '__all__'
+
+class MatchingPairSerializer(serializers.ModelSerializer):
+    correct_answer = MatchingAnswerSerializer()
+
+    class Meta:
+        model = MatchingPair
+        fields = '__all__'
+
+class MatchingQuestionSerializer(serializers.ModelSerializer):
+    pairs = MatchingPairSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MatchingQuestion
+        fields = '__all__'
+
+class MatchingExerciseSerializer(serializers.ModelSerializer):
+    questions = MatchingQuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MatchingExercise
+        fields = '__all__'
 
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,10 +68,30 @@ class ExamAnswerSerializer(serializers.Serializer):
 
 class ValidateExamAnswersSerializer(serializers.Serializer):
     examId = serializers.IntegerField()
-    questions = ExamAnswerSerializer(many=True)
-
-    def validate_questions(self, value):
-        for question in value:
-            if 'question' not in question or 'selectedAnswer' not in question:
-                raise serializers.ValidationError("Each question must have a 'question' and 'selectedAnswer'.")
-        return value
+    # For multiple choice
+    questions = serializers.ListField(
+        child=serializers.DictField(),
+        required=False
+    )
+    # For matching
+    pairs = serializers.ListField(
+        child=serializers.DictField(),
+        required=False
+    )
+    
+    def validate(self, data):
+        exam_id = data.get('examId')
+        try:
+            exam = Exam.objects.get(id=exam_id)
+            
+            if exam.exam_type == 'multiple_choice' and not data.get('questions'):
+                raise serializers.ValidationError("'questions' field is required for multiple choice exams")
+            elif exam.exam_type == 'matching' and not data.get('pairs'):
+                raise serializers.ValidationError("'pairs' field is required for matching exams")
+            elif exam.exam_type == 'mixed':
+                if not data.get('questions') and not data.get('pairs'):
+                    raise serializers.ValidationError("At least one of 'questions' or 'pairs' must be provided")
+        except Exam.DoesNotExist:
+            raise serializers.ValidationError("Exam not found")
+            
+        return data
