@@ -4,20 +4,50 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Safety, EducationFile, BoardExamFile, WorkExperienceFile, TrainingFile, NotarizedFile
 from .serializers import SafetySerializer, EducationFileSerializer, BoardExamFileSerializer, WorkExperienceFileSerializer, TrainingFileSerializer, NotarizedFileSerializer
+from django.core.mail import send_mail
+from django.conf import settings
 
 class SafetyListView(APIView):
     def get(self, request):
         safety_records = Safety.objects.all()
         serializer = SafetySerializer(safety_records, many=True)
         return Response(serializer.data)
-
+    
 class SafetyCreateView(APIView):
     def post(self, request):
         serializer = SafetySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            safety_record = serializer.save()
+            try:
+                recipient_email = serializer.data['email']
+                tracking_code = serializer.data['tracking_code']
+                
+                if recipient_email:
+                    subject = f"Safety Record Created: {tracking_code}"
+                    message = f"""Dear Applicant,
+
+Thank you for submitting your safety record application. Your tracking code is: {tracking_code}
+
+Please keep this code for future reference. You can use it to check the status of your application.
+
+Best regards,
+Safety Department
+"""
+                    send_mail(
+                        subject=subject,
+                        message=message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[recipient_email],
+                        fail_silently=False, 
+                    )
+                else:
+                    print("No email provided, skipping email notification")
+            except Exception as e:
+                print(f"Failed to send email: {e}")
+            
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
 
 class SafetyUpdateView(APIView):
     def put(self, request, trackingnumber):

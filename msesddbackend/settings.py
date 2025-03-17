@@ -27,7 +27,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,11 +37,26 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'safety',
     'checklist',
     'Exam',
+    'accounts',
 ]
+
+## AUTH_USER_MODEL = 'CustomUser'  # Adjust 'accounts' to your app name
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'accounts.authentication.CookiesJWTAuthentication',
+    ),
+    
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -160,3 +174,14 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+# Email Configuration
+Debug = True
+EMAIL_HOST = 'mgbxmsesddbot@gmail.com'
+EMAIL_HOST_USER = 'mgbxmsesddbot@gmail.com'
+EMAIL_HOST_PASSWORD = 'uzyq jkcb bzyf gpdk' 
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# When you get an SMTP server, change to:
+  

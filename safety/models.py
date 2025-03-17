@@ -74,3 +74,5 @@ class TrainingFile(models.Model):
 class NotarizedFile(models.Model):
     safety = models.ForeignKey(Safety, related_name='notarized_files', on_delete=models.CASCADE)
     file = models.FileField(upload_to='notarized/')
+
+    

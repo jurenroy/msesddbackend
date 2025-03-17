@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 from safety.models import Safety 
 
 #The Primary Table for Exam
@@ -51,7 +50,6 @@ class Answer(models.Model):
 #results of all exams
 class Result(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     tracking_code = models.CharField(max_length=100, unique=True, blank=True)
     score = models.FloatField()
 
