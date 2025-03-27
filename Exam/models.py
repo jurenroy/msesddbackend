@@ -3,33 +3,34 @@ from safety.models import Safety
 
 #The Primary Table for Exam
 class Exam(models.Model):
-    name = models.CharField(max_length=120, blank=True, null=True)
-    topic = models.CharField(max_length=120, blank=True, null=True)
-    number_of_questions = models.IntegerField( blank=True, null=True)
-    time = models.IntegerField(help_text="Duration of exam in minutes", blank=True, null=True)
+    
+    Exam_TYPES = [
+        ('multiple_choice', 'Multiple Choice'),
+        ('matching', 'Matching'),
+        ('mixed', 'Mixed')
+    ]
+    exam_type = models.CharField(max_length=20, choices=Exam_TYPES, default='multiple_choice')
+    title = models.CharField(max_length=120, blank=True, null=True)
+    description = models.TextField(max_length=120, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    time_limit = models.IntegerField(help_text="Time limit in minutes", default=60)
     required_score_to_pass = models.IntegerField(help_text="required score in %", blank=True, null=True)
     
-    EXAM_TYPES = [
-        ('multiple_choice', 'Multiple Choice'),
-        ('matching', 'Matching Exercise'),
-        ('mixed', 'Mixed Format'),
-    ]
-    exam_type = models.CharField(max_length=20, choices=EXAM_TYPES, default='multiple_choice')
-    
-    def __str__(self):  
-        return f"{self.name} - {self.topic}"
-    
-    def get_questions(self):
-        return self.questions.all()[:self.number_of_questions]
-    
-    class Meta:
-        verbose_name_plural = "Exams"
+    def __str__(self):
+        return self.title
+        
+    def get_questions_count(self):
+        return self.questions.count()
+        
+    def get_total_marks(self):
+        return sum(question.marks for question in self.questions.all())
 
 #primary table for questions
 class Question(models.Model):
     text = models.CharField(max_length=500)
     exam = models.ForeignKey(Exam, related_name='questions', on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return str(self.text)
@@ -52,18 +53,10 @@ class Result(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
     tracking_code = models.CharField(max_length=100, unique=True, blank=True)
     score = models.FloatField()
-
-    EXAM_TYPES = [
-        ('multiple_choice', 'Multiple Choice'),
-        ('matching', 'Matching Exercise'),
-        ('Mixed', 'Mixed Combined'),
-    ]
-
-    exam_type = models.CharField(max_length=20, choices=EXAM_TYPES, default='multiple_choice')
     details = models.JSONField(null=True, blank=True, help_text="Detailed results in JSON format")
 
     def __str__(self):
-        return f"{self.tracking_code} - {self.exam.name} - {self.score}"
+        return f"{self.tracking_code} - {self.score}"
 
     class Meta:
         indexes = [

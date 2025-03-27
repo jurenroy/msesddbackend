@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'safety',
     'checklist',
     'Exam',
-    'accounts',
+    'accounts', 
 ]
 
 ## AUTH_USER_MODEL = 'CustomUser'  # Adjust 'accounts' to your app name
@@ -62,6 +62,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -151,7 +152,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 # OR allow specific origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Example for local development
-    "https://172.31.10.156:3000",  # Your production frontend
+    "http://172.31.10.156:3000", # Your production frontend
+    "http://172.31.10.40:3000", # other production frontend
+    
 ]
 
 # Allow credentials (if needed)

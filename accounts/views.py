@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response    
 
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
+    TokenObtainPairView, 
     TokenRefreshView,
 )
 
@@ -32,7 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=True,
+                secure=False,
                 samesite='None',
                 path='/'
             )
@@ -41,7 +41,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 key="refresh_token",
                 value=refresh_token,
                 httponly=True,
-                secure=True,
+                secure=False,
                 samesite='None',
                 path='/'    
             )
@@ -72,7 +72,7 @@ class CustomRefreshTokenView(TokenRefreshView):
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=True,
+                secure=False,
                 samesite='None',
                 path='/'
             )

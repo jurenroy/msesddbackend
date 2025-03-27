@@ -5,21 +5,21 @@ from .models import Exam, Question, Answer, Result, MatchingExercise, MatchingQu
 class MatchingAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = MatchingAnswer
-        fields = '__all__'
+        fields = ['id', 'identifier', 'matching_exercise']
 
 class MatchingPairSerializer(serializers.ModelSerializer):
-    correct_answer = MatchingAnswerSerializer()
+    correct_answer = MatchingAnswerSerializer(read_only=True)
 
     class Meta:
         model = MatchingPair
-        fields = '__all__'
+        fields = ['id', 'question', 'correct_answer']
 
 class MatchingQuestionSerializer(serializers.ModelSerializer):
     pairs = MatchingPairSerializer(many=True, read_only=True)
 
     class Meta:
         model = MatchingQuestion
-        fields = '__all__'
+        fields = ['id','letter','content','matching_exercise','pairs']
 
 class MatchingExerciseSerializer(serializers.ModelSerializer):
     questions = MatchingQuestionSerializer(many=True, read_only=True)
@@ -47,10 +47,40 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class ExamSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
+    matching_questions = serializers.SerializerMethodField()
 
     class Meta:
         model = Exam
-        fields = '__all__' 
+        fields = '__all__'
+
+    def get_matching_questions(self, obj):
+        if obj.exam_type in ['matching', 'mixed']:
+            matching_questions = MatchingQuestion.objects.filter(
+                matching_exercise__exam=obj
+            )
+            return MatchingQuestionSerializer(matching_questions, many=True).data
+        return []
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        if instance.exam_type == 'multiple_choice':
+            representation['questions'] = QuestionSerializer(
+                Question.objects.filter(exam=instance), 
+                many=True
+            ).data
+        elif instance.exam_type == 'matching':
+            representation['questions'] = self.get_matching_questions(instance)
+        elif instance.exam_type == 'mixed':
+            # Combine multiple choice and matching questions
+            multiple_choice = QuestionSerializer(
+                Question.objects.filter(exam=instance), 
+                many=True
+            ).data
+            matching = self.get_matching_questions(instance)
+            representation['questions'] = multiple_choice + matching
+        
+        return representation
 
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:

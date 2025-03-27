@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Exam, Question, Result, Answer, MatchingExercise, MatchingAnswer, Safety, MatchingPair
-from .serializers import ExamSerializer, QuestionSerializer, ResultSerializer, AnswerSerializer
+from .serializers import ExamSerializer, QuestionSerializer, ResultSerializer, AnswerSerializer, MatchingExerciseSerializer
 
 class ExamListCreateView(generics.ListCreateAPIView):
     queryset = Exam.objects.all()
@@ -301,3 +301,7 @@ class ResultListCreateView(generics.ListCreateAPIView):
 class AnswerListCreateView(generics.ListCreateAPIView):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
+
+class MatchingExerciseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Result.objects.all()
+    serializer_class = MatchingExerciseSerializer
