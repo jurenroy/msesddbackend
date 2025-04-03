@@ -171,23 +171,39 @@ def validate_exam_answers(request):
             combined_score = round((mc_score + matching_score) / 2) if (mc_total_questions > 0 and matching_total_questions > 0) else (mc_score or matching_score)
 
         response_data = {
-            'combinedScore': combined_score,
-            'mcScore': mc_score,
-            'mcCorrectAnswers': mc_correct_count,
-            'mcTotalQuestions': mc_total_questions,
-            'results': mc_results,
-            
-            
-            'matchingScore': matching_score,
-            'matchingCorrectAnswers': matching_correct_count,
-            'matchingTotalQuestions': matching_total_questions,
-            'matchingResults': matching_results,
-            
             'examName': exam.title,
+            'trackingCode': tracking_code,
             'passingScore': exam.required_score_to_pass,
-            'passed': combined_score >= exam.required_score_to_pass,
-            'trackingCode': tracking_code
         }
+        if exam.exam_type == 'multiple_choice':
+            response_data.update({
+                'mcScore': mc_score,
+                'mcCorrectAnswers': mc_correct_count,
+                'mcTotalQuestions': mc_total_questions,
+                'results': mc_results
+            })
+            
+        elif exam.exam_type == 'matching':
+            response_data.update({
+                'matchingScore': matching_score,
+                'matchingCorrectAnswers': matching_correct_count,
+                'matchingTotalQuestions': matching_total_questions,
+                'results': matching_results
+            })
+
+        else:
+            response_data.update({
+                'combinedScore': combined_score,
+                'mcScore': mc_score,
+                'mcCorrectAnswers': mc_correct_count,
+                'mcTotalQuestions': mc_total_questions,
+                'results': mc_results,
+                
+                'matchingScore': matching_score,
+                'matchingCorrectAnswers': matching_correct_count,
+                'matchingTotalQuestions': matching_total_questions,
+                'matchingResults': matching_results
+            })
         
         # Save the result if tracking code is provided
         if tracking_code:
@@ -201,7 +217,7 @@ def validate_exam_answers(request):
                             'mc_results': mc_results,
                             'matching_results': matching_results,
                             'mc_score': mc_score,
-                            'matching_score': matching_score
+                            'matching_score': matching_score,
                         }
                     )
             except Exception as e:
