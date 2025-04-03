@@ -39,8 +39,12 @@ class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
         try:
             # Get the Safety record using the tracking code
             safety_record = Safety.objects.get(tracking_code=tracking_code)
-            # Get the associated Checklist (assuming one checklist per safety record)
-            checklist = Checklist.objects.get(safety=safety_record)
+            
+            try:
+                checklist = Checklist.objects.get(safety=safety_record)
+            except Checklist.DoesNotExist:
+                checklist = Checklist.objects.create(safety=safety_record)
+                
             return checklist
         except Safety.DoesNotExist:
             raise NotFound("Safety record not found.")
@@ -54,7 +58,7 @@ class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, tracking_code, *args, **kwargs):
         checklist = self.get_object(tracking_code)
-        serializer = self.get_serializer(checklist, data=request.data)
+        serializer = self.get_serializer(checklist, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

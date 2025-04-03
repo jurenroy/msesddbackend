@@ -7,4 +7,7 @@ from .models import Safety, Checklist
 def create_checklist_for_safety(sender, instance, created, **kwargs):
     if created:
         # Create a new checklist for the newly created safety record
-        Checklist.objects.create(safety=instance)
+        Checklist.objects.create(
+            safety=instance,
+            
+            )
