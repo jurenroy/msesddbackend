@@ -36,7 +36,7 @@ class Question(models.Model):
         return str(self.text)
     
     def get_answers(self):
-        return self.answers.all()
+        return self.answers.all()   
 
 #multiple choices answer
 class Answer(models.Model):
@@ -51,8 +51,10 @@ class Answer(models.Model):
 #results of all exams
 class Result(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
-    tracking_code = models.CharField(max_length=100, unique=True, blank=True)
+    tracking_code = models.CharField(max_length=100, blank=True)
     score = models.FloatField()
+    passed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     details = models.JSONField(null=True, blank=True, help_text="Detailed results in JSON format")
 
     def __str__(self):
