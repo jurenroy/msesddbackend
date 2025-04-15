@@ -10,10 +10,6 @@ class ChecklistCreateView(generics.CreateAPIView):
     serializer_class = ChecklistSerializer
 
     def post(self, request, tracking_code, *args, **kwargs):
-        # Extract the tracking code from the request data
-        # tracking_code = request.data.get('tracking_code')
-        
-        # Check if the safety record exists
         try:
             safety_record = Safety.objects.get(tracking_code=tracking_code)
         except Safety.DoesNotExist:
@@ -27,9 +23,9 @@ class ChecklistCreateView(generics.CreateAPIView):
         if serializer.is_valid():
             serializer.save()
             if created:
-                return Response(serializer.data, status=status.HTTP_201_CREATED)  # Created a new checklist
+                return Response(serializer.data, status=status.HTTP_201_CREATED) 
             else:
-                return Response(serializer.data, status=status.HTTP_200_OK)  # Updated existing checklist
+                return Response(serializer.data, status=status.HTTP_200_OK)  
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -44,7 +40,7 @@ class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
                 checklist = Checklist.objects.get(safety=safety_record)
             except Checklist.DoesNotExist:
                 checklist = Checklist.objects.create(safety=safety_record)
-                
+
             return checklist
         except Safety.DoesNotExist:
             raise NotFound("Safety record not found.")

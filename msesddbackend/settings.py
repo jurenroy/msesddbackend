@@ -11,6 +11,17 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+dotenv_path = Path(__file__).resolve().parent.parent / '.env'
+
+# Load the .env file
+success = load_dotenv(dotenv_path)
+print("Dotenv loaded:", success)
+
+# Test if values are loaded
+print("SECRET_KEY:", os.getenv("SECRET_KEY"))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -179,12 +190,12 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Email Configuration
-Debug = True
-EMAIL_HOST = 'mgbxmsesddbot@gmail.com'
-EMAIL_HOST_USER = 'mgbxmsesddbot@gmail.com'
-EMAIL_HOST_PASSWORD = 'uzyq jkcb bzyf gpdk' 
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get ('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # When you get an SMTP server, change to:
   
