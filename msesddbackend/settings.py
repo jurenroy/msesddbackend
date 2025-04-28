@@ -13,15 +13,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-dotenv_path = Path(__file__).resolve().parent.parent / '.env'
-
 # Load the .env file
-success = load_dotenv(dotenv_path)
-print("Dotenv loaded:", success)
-
-# Test if values are loaded
-print("SECRET_KEY:", os.getenv("SECRET_KEY"))
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -190,12 +183,12 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Email Configuration
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+EMAIL_HOST = os.getenv('SMTP_SERVER') 
+EMAIL_PORT = os.getenv('SMTP_PORT')  
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get ('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
-# When you get an SMTP server, change to:
+EMAIL_HOST_USER = os.getenv('SMTP_USER') 
+EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASSWORD')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = "Safety Department <" + os.getenv('SMTP_USER') + ">"
+
   

@@ -19,8 +19,11 @@ class SafetyCreateView(APIView):
         if serializer.is_valid():
             safety_record = serializer.save()
             try:
-                recipient_email = serializer.data['email']
-                tracking_code = serializer.data['tracking_code']
+                recipient_email = serializer.validated_data.get('email')
+                print(f"Tracking code exists: {hasattr(safety_record, 'tracking_code')}")
+                print(f"Tracking code value: {safety_record.tracking_code}")
+                
+                tracking_code = safety_record.tracking_code
                 
                 if recipient_email:
                     subject = f"Safety Record Created: {tracking_code}"
@@ -32,19 +35,22 @@ Please keep this code for future reference. You can use it to check the status o
 
 Best regards,
 Safety Department
-"""
+"""                 
+                    from_email = "MSSESDD Department <mgbxmsesddbot@gmail.com>"
                     send_mail(
                         subject=subject,
                         message=message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        from_email=from_email,
                         recipient_list=[recipient_email],
                         fail_silently=False, 
                     )
+                    print(f"Email sent to {recipient_email} with tracking code {tracking_code}")
+                    
                 else:
                     print("No email provided, skipping email notification")
             except Exception as e:
                 print(f"Failed to send email: {e}")
-            
+
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
