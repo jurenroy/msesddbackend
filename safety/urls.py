@@ -43,6 +43,4 @@ urlpatterns = [
     path('safety/<str:trackingnumber>/notarized-file/', NotarizedFileCreateView.as_view(), name='notarized-file-create'),
     path('safety/<str:trackingnumber>/notarized-files/', NotarizedFileListView.as_view(), name='notarized-file-list'),
     path('notarized-file/<int:file_id>/', NotarizedFileDetailView.as_view(), name='notarized-file-detail'),
-
-    #Exam
 ]

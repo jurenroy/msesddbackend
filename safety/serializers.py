@@ -26,7 +26,7 @@ class SafetySerializer(serializers.ModelSerializer):
             'lastResidence', 'dateOfArrival', 'landingCertificateNo',
             'employmentContract', 'employmentNature', 'companyName',
             'presentCompanyName', 'presentCompanyAddress',
-            'email',  # Include the email field
+            'email',  
             'educationFiles', 'boardExamFiles', 'workExperienceFiles',
             'trainingFiles', 'notarizedFile',
             'education', 'boardExams', 'workExperience',

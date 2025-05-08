@@ -1,0 +1,21 @@
+SAFETY CHECKLIST APPROVAL
+
+Dear {{ safety.name }},
+
+We are pleased to inform you that your safety checklist with tracking code {{ safety.tracking_code }} has been APPROVED.
+
+Approval Date: {{ approval_date }}
+
+This approval confirms that your submitted documentation meets all our required safety standards and regulations. You may now proceed with your activities as per the approved safety protocols.
+
+Please retain this email for your records. If you need to access your full checklist details, you can log in to our system using your credentials.
+
+If you have any questions or need further assistance, please don't hesitate to contact our support team.
+
+Thank you for your commitment to safety practices.
+
+Best regards,
+Safety Management Team
+
+---
+This is an automated message. Please do not reply to this email.

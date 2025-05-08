@@ -1,9 +1,16 @@
-from rest_framework import generics
+from rest_framework import generics, views
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Checklist
+from rest_framework.views import APIView
+from .models import Checklist, ChecklistStatus
 from safety.models import Safety
-from .serializers import ChecklistSerializer
+from .serializers import  (
+    ChecklistSerializer,
+    ChecklistStatusSerializer,
+    ChecklistWithStatusSerializer,
+    ChecklistStatusHistorySerializer
+
+)   
 from rest_framework.exceptions import NotFound
 
 class ChecklistCreateView(generics.CreateAPIView):
@@ -18,7 +25,7 @@ class ChecklistCreateView(generics.CreateAPIView):
         # Check if a checklist already exists for the given safety record
         checklist, created = Checklist.objects.get_or_create(safety=safety_record)
 
-        # If a checklist exists, update it; otherwise, create a new one
+        # If a checklist exists, update it  otherwise create a new one
         serializer = ChecklistSerializer(checklist, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -44,17 +51,16 @@ class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
             return checklist
         except Safety.DoesNotExist:
             raise NotFound("Safety record not found.")
-        except Checklist.DoesNotExist:
-            raise NotFound("Checklist not found.")
 
     def get(self, request, tracking_code, *args, **kwargs):
         checklist = self.get_object(tracking_code)
-        serializer = self.get_serializer(checklist)
+        serializer = self.get_serializer(checklist, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, tracking_code, *args, **kwargs):
         checklist = self.get_object(tracking_code)
-        serializer = self.get_serializer(checklist, data=request.data, partial=True)
+        serializer = self.get_serializer(checklist, data=request.data, partial=True, context={'request': request})
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -64,9 +70,101 @@ class ChecklistDetailView(generics.RetrieveUpdateDestroyAPIView):
         checklist = self.get_object(tracking_code)
         checklist.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
+    
 class ChecklistListView(generics.ListAPIView):
     queryset = Checklist.objects.all()
     serializer_class = ChecklistSerializer
 
+class ChecklistStatusUpdateView(views.APIView):
+    def post(self, request, tracking_code=None, pk=None):
+        checklist = None
+        
+        if tracking_code:
+            try:
+                safety = Safety.objects.get(tracking_code=tracking_code)
+                checklist = Checklist.objects.get(safety=safety)
+            except Safety.DoesNotExist:
+                return Response({"error": "Safety record not found."}, status=status.HTTP_404_NOT_FOUND)
+            except Checklist.DoesNotExist:
+                return Response({"error": "Checklist record not found."}, status=status.HTTP_404_NOT_FOUND)
+        elif pk:
+            try:
+                checklist = Checklist.objects.get(pk=pk)
+            except Checklist.DoesNotExist:
+                return Response({"error": "Checklist not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if checklist is None:
+            return Response({"error": "Either tracking_code or pk must be provided."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if a status already exists for the checklist
+        status_data = request.data.get('status')
+        if status_data:
+            # Update existing status if it exists
+            existing_status = ChecklistStatus.objects.filter(checklist=checklist).last()
+            if existing_status:
+                existing_status.status = status_data
+                existing_status.save()
+                return Response({"status": "updated", "data": existing_status.status}, status=status.HTTP_200_OK)
+            else:
+                # Create a new status if none exists
+                new_status = ChecklistStatus.objects.create(
+                    checklist=checklist,
+                    status=status_data,
+                )
+                return Response({"status": "created", "data": new_status.status}, status=status.HTTP_201_CREATED)
+        
+        return Response({"error": "Status data is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChecklistStatusHistoryView(generics.ListAPIView):
+    serializer_class = ChecklistStatusHistorySerializer
+    
+    def get_queryset(self):
+        pk = self.kwargs.get('pk')
+        tracking_code = self.kwargs.get('tracking_code')
+        
+        if pk:
+            return ChecklistStatus.objects.filter(checklist_id=pk).order_by('-created_at')
+        elif tracking_code:
+            return ChecklistStatus.objects.filter(
+                checklist__safety__tracking_code=tracking_code
+            ).order_by('-created_at')
+        
+        return ChecklistStatus.objects.none()
+        
+class ChecklistStatusListView(generics.ListAPIView):
+    queryset = ChecklistStatus.objects.all()
+    serializer_class = ChecklistStatusSerializer
+    
+    def get_queryset(self):
+        """
+        Optionally restricts the returned statuses by filtering against query parameters
+        """
+        queryset = ChecklistStatus.objects.all().select_related('checklist')
+        
+        # Add filtering options if needed
+        checklist_id = self.request.query_params.get('checklist_id', None)
+        status = self.request.query_params.get('status', None)
+        
+        if checklist_id:
+            queryset = queryset.filter(checklist_id=checklist_id)
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        return queryset
+    
+class MinimalChecklistStatusListView(generics.ListAPIView):
+    queryset = ChecklistStatus.objects.all()
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = [
+            {
+                'id': status.id,
+                'status': status.status,
+                'checklist_id': status.checklist_id
+            }
+            for status in queryset
+        ]
+        return Response(data)
+        

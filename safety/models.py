@@ -24,17 +24,17 @@ class Safety(models.Model):
     email = models.EmailField(max_length=100, blank=True, null=True)  # Use EmailField for email addresses
 
     # File fields for uploads
-    educationFiles = models.JSONField(default=list, blank=True, null=True)
-    boardExamFiles = models.JSONField(default=list, blank=True, null=True)
-    workExperienceFiles = models.JSONField(default=list, blank=True, null=True)
-    trainingFiles = models.JSONField(default=list, blank=True, null=True)
-    notarizedFiles = models.JSONField(default=list, blank=True, null=True)
+    educationFiles = models.FileField(upload_to='safety/education_files/', blank=True, null=True)
+    boardExamFiles = models.FileField(default=list, blank=True, null=True)
+    workExperienceFiles = models.FileField(default=list, blank=True, null=True)
+    trainingFiles = models.FileField(default=list, blank=True, null=True)
+    notarizedFiles = models.FileField(default=list, blank=True, null=True)
 
     # JSON fields for structured data
-    education = models.JSONField(default=list, blank=True, null=True)  # Store as JSON
-    boardExams = models.JSONField(default=list, blank=True, null=True)  # Store as JSON
-    workExperience = models.JSONField(default=list, blank=True, null=True)  # Store as JSON
-    trainings = models.JSONField(default=list, blank=True, null=True)  # Store as JSON
+    education = models.FileField(default=list, blank=True, null=True)  # Store as JSON
+    boardExams = models.FileField(default=list, blank=True, null=True)  # Store as JSON
+    workExperience = models.FileField(default=list, blank=True, null=True)  # Store as JSON
+    trainings = models.FileField(default=list, blank=True, null=True)  # Store as JSON
 
     documents = models.BooleanField(default=False, null=True)
     compliance = models.BooleanField(default=False, null=True)
