@@ -19,23 +19,27 @@ class Safety(models.Model):
     companyName = models.CharField(max_length=100, null=True)
     presentCompanyName = models.CharField(max_length=100, null=True)
     presentCompanyAddress = models.CharField(max_length=255, null=True)
-
-    # New email field
-    email = models.EmailField(max_length=100, blank=True, null=True)  # Use EmailField for email addresses
+    email = models.EmailField(max_length=100, blank=True, null=True)
 
     # File fields for uploads
-    educationFiles = models.FileField(upload_to='safety/education_files/', blank=True, null=True)
-    boardExamFiles = models.FileField(default=list, blank=True, null=True)
-    workExperienceFiles = models.FileField(default=list, blank=True, null=True)
-    trainingFiles = models.FileField(default=list, blank=True, null=True)
-    notarizedFiles = models.FileField(default=list, blank=True, null=True)
+    educationFiles = models.FileField(upload_to='education/', null=True, blank=True)
+    boardExamFiles = models.FileField(upload_to='board_exams/', null=True, blank=True)
+    workExperienceFiles = models.FileField(upload_to='work_experience/', null=True, blank=True)
+    trainingFiles = models.FileField(upload_to='training/', null=True, blank=True)
+    notarizedFiles = models.FileField(upload_to='notarized/', null=True, blank=True)
+    
+    # Additional document fields
+    application_form = models.FileField(upload_to='application_forms/', null=True, blank=True)
+    photo = models.FileField(upload_to='photos/', null=True, blank=True)
+    notarized_document = models.FileField(upload_to='notarized_docs/', null=True, blank=True)
+    proof_document = models.FileField(upload_to='proof_docs/', null=True, blank=True)
 
     # JSON fields for structured data
-    education = models.FileField(default=list, blank=True, null=True)  # Store as JSON
-    boardExams = models.FileField(default=list, blank=True, null=True)  # Store as JSON
-    workExperience = models.FileField(default=list, blank=True, null=True)  # Store as JSON
-    trainings = models.FileField(default=list, blank=True, null=True)  # Store as JSON
-
+    education = models.JSONField(default=list, blank=True, null=True)
+    boardExams = models.JSONField(default=list, blank=True, null=True)
+    workExperience = models.JSONField(default=list, blank=True, null=True)
+    trainings = models.JSONField(default=list, blank=True, null=True)
+    
     documents = models.BooleanField(default=False, null=True)
     compliance = models.BooleanField(default=False, null=True)
     understanding = models.BooleanField(default=False, null=True)
@@ -51,28 +55,80 @@ class Safety(models.Model):
         super().save(*args, **kwargs)
 
     def generate_unique_tracking_code(self):
-        # Generate a unique tracking code
-        return str(uuid.uuid4())[:10]  # Adjust length as needed
+        return str(uuid.uuid4())[:10]
 
+    def __str__(self):
+        return f"{self.name} - {self.tracking_code}"
 
-class EducationFile(models.Model):
-    safety = models.ForeignKey(Safety, related_name='education_files', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='education/')
+class Education(models.Model):
+    safety = models.ForeignKey(Safety, related_name='education_records', on_delete=models.CASCADE)
+    school_name = models.CharField(max_length=255)
+    degree = models.CharField(max_length=255)
+    year_completed = models.IntegerField()
+    major = models.CharField(max_length=255, blank=True, null=True)
+    document = models.FileField(upload_to='safety_files/education/', null=True, blank=True)
     
-class BoardExamFile(models.Model):
-    safety = models.ForeignKey(Safety, related_name='board_exam_files', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='board_exams/')
+    def __str__(self):
+        return f"{self.safety.name} - {self.degree} from {self.school_name}"
 
-class WorkExperienceFile(models.Model):
-    safety = models.ForeignKey(Safety, related_name='work_experience_files', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='work_experience/')
+class BoardExam(models.Model):
+    safety = models.ForeignKey(Safety, related_name='board_exam_records', on_delete=models.CASCADE)
+    exam_name = models.CharField(max_length=255)
+    date_taken = models.DateField()
+    license_number = models.CharField(max_length=100)
+    expiry_date = models.DateField(null=True, blank=True)
+    document = models.FileField(upload_to='safety_files/board_exams/', null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.safety.name} - {self.exam_name}"
+
+class WorkExperience(models.Model):
+    safety = models.ForeignKey(Safety, related_name='work_experience_records', on_delete=models.CASCADE)
+    company_name = models.CharField(max_length=255)
+    position = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    responsibilities = models.TextField(blank=True, null=True)
+    document = models.FileField(upload_to='safety_files/work_experience/', null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.safety.name} - {self.position} at {self.company_name}"
+
+class Training(models.Model):
+    safety = models.ForeignKey(Safety, related_name='training_records', on_delete=models.CASCADE)
+    training_name = models.CharField(max_length=255)
+    provider = models.CharField(max_length=255)
+    date_completed = models.DateField()
+    certificate_number = models.CharField(max_length=100, blank=True, null=True)
+    document = models.FileField(upload_to='safety_files/training/', null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.safety.name} - {self.training_name}"
+
+class SafetyFile(models.Model):
+    safety = models.ForeignKey(Safety, related_name='files', on_delete=models.CASCADE)
+    file = models.FileField(upload_to='safety_files/')
+    file_type = models.CharField(max_length=50, choices=[
+        ('education', 'Education'),
+        ('board_exam', 'Board Exam'),
+        ('work_experience', 'Work Experience'),
+        ('training', 'Training'),
+        ('notarized', 'Notarized'),
+        ('application', 'Application Form'),
+        ('photo', 'Photograph'),
+        ('fee', 'Fee Payment'),
+        ('endorsement', 'Endorsement'),
+        ('permit', 'Permit'),
+        ('proof', 'Proof Document')
+    ])
+    description = models.CharField(max_length=255, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class TrainingFile(models.Model):
     safety = models.ForeignKey(Safety, related_name='training_files', on_delete=models.CASCADE)
     file = models.FileField(upload_to='training/')
 
-class NotarizedFile(models.Model):
-    safety = models.ForeignKey(Safety, related_name='notarized_files', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='notarized/')
+    def __str__(self):
+        return f"{self.safety.name} - {self.file_type} - {self.description}"
 
     

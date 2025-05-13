@@ -170,10 +170,15 @@ def validate_exam_answers(request):
         else: 
             combined_score = round((mc_score + matching_score) / 2) if (mc_total_questions > 0 and matching_total_questions > 0) else (mc_score or matching_score)
 
+        passed = combined_score >= 75
+        status = "Passed" if passed else "Failed"
+
         response_data = {
             'examName': exam.title,
             'trackingCode': tracking_code,
             'passingScore': exam.required_score_to_pass,
+            'status': status,
+            'passed': passed,
         }
         if exam.exam_type == 'multiple_choice':
             response_data.update({
@@ -205,7 +210,6 @@ def validate_exam_answers(request):
                 'matchingResults': matching_results
             })
         
-        # Save the result if tracking code is provided
         if tracking_code:
             try:
                     Result.objects.create(
@@ -218,6 +222,7 @@ def validate_exam_answers(request):
                             'matching_results': matching_results,
                             'mc_score': mc_score,
                             'matching_score': matching_score,
+                            'status': status
                         }
                     )
             except Exception as e:

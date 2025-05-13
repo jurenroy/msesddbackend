@@ -66,7 +66,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -159,7 +158,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Example for local development
     "http://172.31.10.156:3000", # Your production frontend
     "http://172.31.10.40:3000", # other production frontend
-    
+    "http://172.31.10.70:3000", # Additional frontend
+    "http://172.31.10.70:8000", # Backend URL
 ]
 
 # Allow credentials (if needed)
@@ -191,5 +191,12 @@ EMAIL_HOST_USER = os.getenv('SMTP_USER')
 EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASSWORD')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = "Safety Department <" + os.getenv('SMTP_USER') + ">"
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+# Maximum size that can be uploaded
+MAX_UPLOAD_SIZE = 10485760  # 10MB
 
   

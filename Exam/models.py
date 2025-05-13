@@ -57,6 +57,14 @@ class Result(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     details = models.JSONField(null=True, blank=True, help_text="Detailed results in JSON format")
 
+    def save(self, *args, **kwargs):
+        # Check if passed based on exam's required score
+        if self.exam.required_score_to_pass is not None:
+            self.passed = self.score >= self.exam.required_score_to_pass
+        else:
+            self.passed = self.score >= 75  # Default passing score if not specified
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.tracking_code} - {self.score}"
 

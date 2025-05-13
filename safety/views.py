@@ -2,27 +2,53 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Safety, EducationFile, BoardExamFile, WorkExperienceFile, TrainingFile, NotarizedFile
-from .serializers import SafetySerializer, EducationFileSerializer, BoardExamFileSerializer, WorkExperienceFileSerializer, TrainingFileSerializer, NotarizedFileSerializer
+from django.core.exceptions import ValidationError
+from .models import Safety, SafetyFile, Education, BoardExam, WorkExperience, Training
+from .serializers import (
+    SafetySerializer, SafetyFileSerializer, 
+    EducationSerializer, BoardExamSerializer,
+    WorkExperienceSerializer, TrainingSerializer
+)
 from django.core.mail import send_mail
 from django.conf import settings
 
 class SafetyListView(APIView):
     def get(self, request):
-        safety_records = Safety.objects.all()
-        serializer = SafetySerializer(safety_records, many=True)
-        return Response(serializer.data)
+        try:
+            print("DEBUG: Accessing SafetyListView")
+            print(f"DEBUG: Request path: {request.path}")
+            print(f"DEBUG: Request method: {request.method}")
+            print(f"DEBUG: Request headers: {dict(request.headers)}")
+            
+            safety_records = Safety.objects.all()
+            print(f"DEBUG: Found {safety_records.count()} safety records")
+            
+            serializer = SafetySerializer(safety_records, many=True, context={'request': request})
+            serialized_data = serializer.data
+            print("DEBUG: Successfully serialized data")
+            
+            return Response(serialized_data)
+        except Exception as e:
+            import traceback
+            print(f"ERROR in SafetyListView: {str(e)}")
+            print("Traceback:")
+            print(traceback.format_exc())
+            return Response(
+                {
+                    "error": "An error occurred while fetching safety records.",
+                    "detail": str(e),
+                    "path": request.path
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 class SafetyCreateView(APIView):
     def post(self, request):
-        serializer = SafetySerializer(data=request.data)
+        serializer = SafetySerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             safety_record = serializer.save()
             try:
                 recipient_email = serializer.validated_data.get('email')
-                print(f"Tracking code exists: {hasattr(safety_record, 'tracking_code')}")
-                print(f"Tracking code value: {safety_record.tracking_code}")
-                
                 tracking_code = safety_record.tracking_code
                 
                 if recipient_email:
@@ -54,12 +80,11 @@ Safety Department
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-
 class SafetyUpdateView(APIView):
     def put(self, request, trackingnumber):
         try:
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            serializer = SafetySerializer(safety_record, data=request.data, partial=True)  # Allow partial updates
+            serializer = SafetySerializer(safety_record, data=request.data, partial=True, context={'request': request})
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=200)
@@ -71,127 +96,155 @@ class SafetyDetailView(APIView):
     def get(self, request, trackingnumber):
         try:
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            serializer = SafetySerializer(safety_record)
+            serializer = SafetySerializer(safety_record, context={'request': request})
             return Response(serializer.data)
         except Safety.DoesNotExist:
             return Response({"error": "Safety record not found."}, status=404)
 
-# New views for handling files
+# New views for handling records and files
 
-class EducationFileListView(APIView):
+class SafetyFileListView(APIView):
     def get(self, request, trackingnumber):
         try:
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            education_files = EducationFile.objects.filter(safety=safety_record)
-            serializer = EducationFileSerializer(education_files, many=True)
+            files = SafetyFile.objects.filter(safety=safety_record)
+            serializer = SafetyFileSerializer(files, many=True)
             return Response(serializer.data)
         except Safety.DoesNotExist:
             return Response({"error": "Safety record not found."}, status=404)
 
-class EducationFileDetailView(APIView):
-    def get(self, request, file_id):
-        try:
-            education_file = EducationFile.objects.get(id=file_id)
-            serializer = EducationFileSerializer(education_file)
-            return Response(serializer.data)
-        except EducationFile.DoesNotExist:
-            return Response({"error": "Education file not found."}, status=404)
-
-class BoardExamFileListView(APIView):
-    def get(self, request, trackingnumber):
-        try:
-            safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            board_exam_files = BoardExamFile.objects.filter(safety=safety_record)
-            serializer = BoardExamFileSerializer(board_exam_files, many=True)
-            return Response(serializer.data)
-        except Safety.DoesNotExist:
-            return Response({"error": "Safety record not found."}, status=404)
-
-class BoardExamFileDetailView(APIView):
-    def get(self, request, file_id):
-        try:
-            board_exam_file = BoardExamFile.objects.get(id=file_id)
-            serializer = BoardExamFileSerializer(board_exam_file)
-            return Response(serializer.data)
-        except BoardExamFile.DoesNotExist:
-            return Response({"error": "Board exam file not found."}, status=404)
-
-class WorkExperienceFileListView(APIView):
-    def get(self, request, trackingnumber):
-        try:
-            safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            work_experience_files = WorkExperienceFile.objects.filter(safety=safety_record)
-            serializer = WorkExperienceFileSerializer(work_experience_files, many=True)
-            return Response(serializer.data)
-        except Safety.DoesNotExist:
-            return Response({"error": "Safety record not found."}, status=404)
-
-class WorkExperienceFileDetailView(APIView):
-    def get(self, request, file_id):
-        try:
-            work_experience_file = WorkExperienceFile.objects.get(id=file_id)
-            serializer = WorkExperienceFileSerializer(work_experience_file)
-            return Response(serializer.data)
-        except WorkExperienceFile.DoesNotExist:
-            return Response({"error": "Work experience file not found."}, status=404)
-
-class TrainingFileListView(APIView):
-    def get(self, request, trackingnumber):
-        try:
-            safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            training_files = TrainingFile.objects.filter(safety=safety_record)
-            serializer = TrainingFileSerializer(training_files, many=True)
-            return Response(serializer.data)
-        except Safety.DoesNotExist:
-            return Response({"error": "Safety record not found."}, status=404)
-
-class TrainingFileDetailView(APIView):
-    def get(self, request, file_id):
-        try:
-            training_file = TrainingFile.objects.get(id=file_id)
-            serializer = TrainingFileSerializer(training_file)
-            return Response(serializer.data)
-        except TrainingFile.DoesNotExist:
-            return Response({"error": "Training file not found."}, status=404)
-
-class NotarizedFileCreateView(APIView):
     def post(self, request, trackingnumber):
         try:
-            # Get the Safety record based on the tracking number
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            files = request.FILES.getlist('notarizedFiles')  # Get the list of uploaded files
+            files = request.FILES.getlist('files')
+            file_types = request.POST.getlist('file_types', [])
+            descriptions = request.POST.getlist('descriptions', [])
 
             if not files:
-                return Response({"error": "No files provided."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "No files provided."}, status=400)
 
-            # Iterate over the files and save each one
-            for file in files:
-                serializer = NotarizedFileSerializer(data={'file': file, 'safety': safety_record.id})
-                if serializer.is_valid():
-                    serializer.save()  # Save the file associated with the safety record
-                else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            uploaded_files = []
+            for i, file in enumerate(files):
+                file_type = file_types[i] if i < len(file_types) else 'other'
+                description = descriptions[i] if i < len(descriptions) else ''
+                
+                file_instance = SafetyFile.objects.create(
+                    safety=safety_record,
+                    file=file,
+                    file_type=file_type,
+                    description=description
+                )
+                uploaded_files.append(SafetyFileSerializer(file_instance).data)
 
-            return Response({"message": "Files uploaded successfully!"}, status=status.HTTP_201_CREATED)
+            return Response(uploaded_files, status=201)
         except Safety.DoesNotExist:
-            return Response({"error": "Safety record not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Safety record not found."}, status=404)
 
-class NotarizedFileListView(APIView):
+class SafetyFileDetailView(APIView):
+    def get(self, request, file_id):
+        try:
+            file = SafetyFile.objects.get(id=file_id)
+            serializer = SafetyFileSerializer(file)
+            return Response(serializer.data)
+        except SafetyFile.DoesNotExist:
+            return Response({"error": "File not found."}, status=404)
+
+    def delete(self, request, file_id):
+        try:
+            file = SafetyFile.objects.get(id=file_id)
+            file.delete()
+            return Response(status=204)
+        except SafetyFile.DoesNotExist:
+            return Response({"error": "File not found."}, status=404)
+
+class EducationRecordView(APIView):
     def get(self, request, trackingnumber):
         try:
-            print(trackingnumber)
             safety_record = Safety.objects.get(tracking_code=trackingnumber)
-            notarized_files = NotarizedFile.objects.filter(safety=safety_record)
-            serializer = NotarizedFileSerializer(notarized_files, many=True)
+            education_records = Education.objects.filter(safety=safety_record)
+            serializer = EducationSerializer(education_records, many=True)
             return Response(serializer.data)
         except Safety.DoesNotExist:
             return Response({"error": "Safety record not found."}, status=404)
 
-class NotarizedFileDetailView(APIView):
-    def get(self, request, file_id):
+    def post(self, request, trackingnumber):
         try:
-            notarized_file = NotarizedFile.objects.get(id=file_id)
-            serializer = NotarizedFileSerializer(notarized_file)
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            data = request.data.copy()
+            data['safety'] = safety_record.id
+            serializer = EducationSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
+
+class BoardExamRecordView(APIView):
+    def get(self, request, trackingnumber):
+        try:
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            board_exam_records = BoardExam.objects.filter(safety=safety_record)
+            serializer = BoardExamSerializer(board_exam_records, many=True)
             return Response(serializer.data)
-        except NotarizedFile.DoesNotExist:
-            return Response({"error": "Notarized file not found."}, status=404)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
+
+    def post(self, request, trackingnumber):
+        try:
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            data = request.data.copy()
+            data['safety'] = safety_record.id
+            serializer = BoardExamSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
+
+class WorkExperienceRecordView(APIView):
+    def get(self, request, trackingnumber):
+        try:
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            work_experience_records = WorkExperience.objects.filter(safety=safety_record)
+            serializer = WorkExperienceSerializer(work_experience_records, many=True)
+            return Response(serializer.data)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
+
+    def post(self, request, trackingnumber):
+        try:
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            data = request.data.copy()
+            data['safety'] = safety_record.id
+            serializer = WorkExperienceSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
+
+class TrainingRecordView(APIView):
+    def get(self, request, trackingnumber):
+        try:
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            training_records = Training.objects.filter(safety=safety_record)
+            serializer = TrainingSerializer(training_records, many=True)
+            return Response(serializer.data)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
+
+    def post(self, request, trackingnumber):
+        try:
+            safety_record = Safety.objects.get(tracking_code=trackingnumber)
+            data = request.data.copy()
+            data['safety'] = safety_record.id
+            serializer = TrainingSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        except Safety.DoesNotExist:
+            return Response({"error": "Safety record not found."}, status=404)
