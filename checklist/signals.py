@@ -19,39 +19,51 @@ def create_checklist_for_safety(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=ChecklistStatus)
 def send_approval_notification(sender, instance, created, **kwargs):
+    print(f"ChecklistStatus signal triggered: status={instance.status}, created={created}")
+    
     if instance.status.lower() == 'approved':
         update_fields = kwargs.get('update_fields') or set()
-        if created or 'status' in update_fields:
-            checklist = instance.checklist
-            safety = checklist.safety
-            recipient_email = safety.email
+        print(f"Status is approved. update_fields={update_fields}")
+        
+        # Always process the email when status is 'approved', regardless of created or update_fields
+        checklist = instance.checklist
+        safety = checklist.safety
+        recipient_email = safety.email
 
-            if not recipient_email:
-                print(f"No email address found for {safety.name}. Email notification not sent.")
-                return
+        print(f"Safety record: {safety.name}, Email: {recipient_email}")
 
-            subject = f"Your Safety Checklist ({safety.tracking_code}) has been APPROVED"
+        if not recipient_email:
+            print(f"No email address found for {safety.name}. Email notification not sent.")
+            return
 
-            context = {
-                'safety': safety,
-                'checklist': checklist,
-                'status': instance,
-                'approval_date': getattr(instance, 'created_at', None).strftime('%B %d, %Y') if getattr(instance, 'created_at', None) else 'N/A',
-            }
+        subject = f"Your Safety Checklist ({safety.tracking_code}) has been APPROVED"
 
-            try:
-                plain_message = render_to_string('emails/checklist_approved_plain.txt', context)
-                html_message = render_to_string('emails/checklist_approved.html', context)
+        context = {
+            'safety': safety,
+            'checklist': checklist,
+            'status': instance,
+            'approval_date': getattr(instance, 'created_at', None).strftime('%B %d, %Y') if getattr(instance, 'created_at', None) else 'N/A',
+        }
 
-                send_mail(
-                    subject=subject,
-                    message=plain_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[recipient_email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-                print(f"Approval email sent to {recipient_email}")
-            except Exception as e:
-                print(f"Failed to send approval email to {recipient_email}: {e}")
+        try:
+            # Fix the template paths to match the actual file names
+            plain_message = render_to_string('email/checklist_approved._plain.txt', context)
+            html_message = render_to_string('email/checklist_approved.html', context)
+
+            print(f"Attempting to send email to {recipient_email} from {settings.DEFAULT_FROM_EMAIL}")
+            
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[recipient_email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            print(f"Approval email sent to {recipient_email}")
+        except Exception as e:
+            print(f"Failed to send approval email to {recipient_email}: {e}")
+            # Print the exception traceback for debugging
+            import traceback
+            traceback.print_exc()
     

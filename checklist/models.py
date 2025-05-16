@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from safety.models import Safety  # Adjust the import based on your project structure
 
 class Checklist(models.Model):
@@ -79,9 +80,14 @@ class ChecklistStatus(models.Model):
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
+        ('review', 'Under Review'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    
+    approved_date = models.DateTimeField(null=True, blank=True)
+    
     
     class Meta:
         ordering = ['-created_at']
@@ -90,3 +96,9 @@ class ChecklistStatus(models.Model):
     
     def __str__(self):
         return f"{self.checklist} - {self.status} on {self.created_at.strftime('%Y-%m-%d')}"
+    
+    def save(self, *args, **kwargs):
+        # If status is being set to approved, update the approved_date
+        if self.status == 'approved':
+            self.approved_date = timezone.now()
+        super(ChecklistStatus, self).save(*args, **kwargs)

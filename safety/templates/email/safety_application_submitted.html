@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            background-color: #0066cc;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .tracking-code {
+            background-color: #f5f5f5;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+            color: #0066cc;
+        }
+        .footer {
+            background-color: #f1f1f1;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Safety Application Submitted</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear <strong>{{ name }}</strong>,</p>
+        
+        <p>Thank you for submitting your safety record application. Your application has been received and is being processed.</p>
+        
+        <p>Please use the following tracking code to check the status of your application:</p>
+        
+        <div class="tracking-code">{{ tracking_code }}</div>
+        
+        <p><strong>Important:</strong> Keep this tracking code for future reference. You will need it to:</p>
+        <ul>
+            <li>Check the status of your application</li>
+            <li>Access your safety records</li>
+            <li>Update your information if needed</li>
+        </ul>
+        
+        <p>If you have any questions or need assistance, please contact our support team.</p>
+        
+        <p>Best regards,<br>
+        <strong>MGBX Safety Department</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+</body>
+</html> 

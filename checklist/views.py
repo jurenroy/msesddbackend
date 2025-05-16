@@ -96,24 +96,24 @@ class ChecklistStatusUpdateView(views.APIView):
         if checklist is None:
             return Response({"error": "Either tracking_code or pk must be provided."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if a status already exists for the checklist
+        # Check if a status value is provided
         status_data = request.data.get('status')
-        if status_data:
-            # Update existing status if it exists
-            existing_status = ChecklistStatus.objects.filter(checklist=checklist).last()
-            if existing_status:
-                existing_status.status = status_data
-                existing_status.save()
-                return Response({"status": "updated", "data": existing_status.status}, status=status.HTTP_200_OK)
-            else:
-                # Create a new status if none exists
-                new_status = ChecklistStatus.objects.create(
-                    checklist=checklist,
-                    status=status_data,
-                )
-                return Response({"status": "created", "data": new_status.status}, status=status.HTTP_201_CREATED)
+        if not status_data:
+            return Response({"error": "Status data is required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Always create a new status record to get a new timestamp
+        new_status = ChecklistStatus.objects.create(
+            checklist=checklist,
+            status=status_data,
+        )
         
-        return Response({"error": "Status data is required."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = ChecklistStatusSerializer(new_status)
+        
+        return Response({
+            "status": "created", 
+            "data": serializer.data,
+            "message": f"Checklist status changed to {status_data} on {new_status.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        }, status=status.HTTP_201_CREATED)
 
 
 class ChecklistStatusHistoryView(generics.ListAPIView):

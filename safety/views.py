@@ -11,6 +11,8 @@ from .serializers import (
 )
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework.decorators import api_view
+from django.template.loader import render_to_string
 
 class SafetyListView(APIView):
     def get(self, request):
@@ -50,24 +52,31 @@ class SafetyCreateView(APIView):
             try:
                 recipient_email = serializer.validated_data.get('email')
                 tracking_code = safety_record.tracking_code
+                name = safety_record.name or "Applicant"
                 
                 if recipient_email:
-                    subject = f"Safety Record Created: {tracking_code}"
-                    message = f"""Dear Applicant,
-
-Thank you for submitting your safety record application. Your tracking code is: {tracking_code}
-
-Please keep this code for future reference. You can use it to check the status of your application.
-
-Best regards,
-Safety Department
-"""                 
-                    from_email = "MSSESDD Department <mgbxmsesddbot@gmail.com>"
+                    subject = f"Safety Application Submitted: {tracking_code}"
+                    
+                    # Context for email templates
+                    context = {
+                        'name': name,
+                        'tracking_code': tracking_code
+                    }
+                    
+                    # Use Django's template system to render the email content
+                    from django.template.loader import render_to_string
+                    
+                    # Render the HTML and plain text templates
+                    html_message = render_to_string('email/safety_application_submitted.html', context)
+                    plain_message = render_to_string('email/safety_application_submitted.txt', context)
+                 
+                    from_email = settings.DEFAULT_FROM_EMAIL
                     send_mail(
                         subject=subject,
-                        message=message,
+                        message=plain_message,
                         from_email=from_email,
                         recipient_list=[recipient_email],
+                        html_message=html_message,
                         fail_silently=False, 
                     )
                     print(f"Email sent to {recipient_email} with tracking code {tracking_code}")
@@ -76,6 +85,8 @@ Safety Department
                     print("No email provided, skipping email notification")
             except Exception as e:
                 print(f"Failed to send email: {e}")
+                import traceback
+                traceback.print_exc()
 
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
@@ -248,3 +259,88 @@ class TrainingRecordView(APIView):
             return Response(serializer.errors, status=400)
         except Safety.DoesNotExist:
             return Response({"error": "Safety record not found."}, status=404)
+
+@api_view(['GET'])
+def update_safety_email(request, tracking_code):
+    """
+    Update the email address for a safety record using GET request
+    """
+    try:
+        email = request.query_params.get('email', None)
+        if not email:
+            return Response({"error": "Email parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        safety = Safety.objects.get(tracking_code=tracking_code)
+        safety.email = email
+        safety.save()
+        
+        return Response({"success": True, "message": f"Email updated to {email}"})
+    
+    except Safety.DoesNotExist:
+        return Response({"error": "Safety record not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def test_email(request):
+    """
+    Test email sending functionality
+    """
+    try:
+        email = request.query_params.get('email', None)
+        if not email:
+            return Response({"error": "Email parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(f"Testing email sending to {email}")
+        
+        # Get current time
+        from django.utils import timezone
+        current_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Send a test email
+        subject = "MSESDD Test Email"
+        message = "This is a test email from the MSESDD system to verify email functionality."
+        html_message = f"""
+        <html>
+        <body>
+            <h2 style="color: #4CAF50;">Test Email from MSESDD System</h2>
+            <p>This is a test email sent to {email} to verify that the email system is working correctly.</p>
+            <p>If you're receiving this, the email configuration is working!</p>
+            <p>Time sent: {current_time}</p>
+        </body>
+        </html>
+        """
+        
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        result = send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            html_message=html_message,
+            fail_silently=False
+        )
+        
+        print(f"Email send result: {result}")
+        
+        return Response({
+            "success": True, 
+            "message": f"Test email sent to {email}",
+            "send_result": result,
+            "email_settings": {
+                "backend": settings.EMAIL_BACKEND,
+                "host": settings.EMAIL_HOST,
+                "port": settings.EMAIL_PORT,
+                "user": settings.EMAIL_HOST_USER,
+                "from_email": settings.DEFAULT_FROM_EMAIL,
+                "use_tls": settings.EMAIL_USE_TLS
+            }
+        })
+    
+    except Exception as e:
+        import traceback
+        print(f"Error sending test email: {e}")
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

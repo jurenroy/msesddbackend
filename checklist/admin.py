@@ -24,7 +24,6 @@ class ChecklistAdmin(admin.ModelAdmin):
     get_application_status.short_description = 'Application Form'
     
     def get_diploma_status(self, obj):
-        # Check if this field exists
         if hasattr(obj, 'college_diploma_compliance'):
             if obj.college_diploma_compliance:
                 return format_html(

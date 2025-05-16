@@ -1,0 +1,22 @@
+SAFETY APPLICATION SUBMITTED
+
+Dear {{ name }},
+
+Thank you for submitting your safety record application. Your application has been received and is being processed.
+
+Please use the following tracking code to check the status of your application:
+
+{{ tracking_code }}
+
+Important: Keep this tracking code for future reference. You will need it to:
+* Check the status of your application
+* Access your safety records
+* Update your information if needed
+
+If you have any questions or need assistance, please contact our support team.
+
+Best regards,
+MGBX Safety Department
+
+---
+This is an automated message. Please do not reply to this email. 
