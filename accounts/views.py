@@ -13,6 +13,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+# from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+# havent test it yet in the proper server frontend, but in postman it works 
+# i also added refreshtoken and logout function
+# i added the login functions but it doesnt work on different Server
+# dont forget to add isadmin in checklistview in frontend since its partial login, havent tested yet because of different server in frontend
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
 
